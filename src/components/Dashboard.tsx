@@ -21,10 +21,11 @@ export default function Dashboard() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch all credentials plus config status
-  const loadConfig = async () => {
+  const loadConfig = async (forceRetry = false) => {
     try {
       setRefreshingConfig(true);
-      const res = await fetch("/api/config");
+      const url = forceRetry ? "/api/config?retry=true" : "/api/config";
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setSystemConfig(data);
@@ -59,7 +60,7 @@ export default function Dashboard() {
   }, []);
 
   const handleRefreshAll = () => {
-    loadConfig();
+    loadConfig(true);
     loadContacts();
   };
 

@@ -67,7 +67,7 @@ let memoryContacts: any[] = [
 let dbConnectionPromise: Promise<void> | null = null;
 
 // Asynchronous DB connection bootstrap
-async function initializeDatabase() {
+async function initializeDatabase(force: boolean = false) {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     storageMode = "memory";
@@ -75,6 +75,20 @@ async function initializeDatabase() {
     connectionError = "MONGODB_URI environment variable is missing. Running in Memory mode (Demo).";
     console.log(`[Database] Mode: Memory. ${connectionError}`);
     return;
+  }
+
+  if (force) {
+    if (dbClient) {
+      try {
+        await dbClient.close();
+      } catch (err) {
+        // ignore close error
+      }
+    }
+    dbClient = null;
+    dbConnected = false;
+    dbConnectionPromise = null;
+    connectionError = null;
   }
 
   if (dbConnected && dbClient) {
@@ -98,7 +112,8 @@ async function initializeDatabase() {
         dbConnected = false;
         connectionError = `Connection failed: ${err.message || err}. Reverted to Memory mode (Demo).`;
         console.error(`[Database] Error: ${connectionError}`);
-        dbConnectionPromise = null; // Let next attempt retry
+        // Do NOT set dbConnectionPromise to null here to prevent connection flood and blocking API routes.
+        // It remains resolved. Re-attempts must be triggered via force retry.
       }
     })();
   }
@@ -111,7 +126,8 @@ initializeDatabase();
 // Middleware to ensure DB connection is initialized before handling requests
 app.use(async (req, res, next) => {
   if (req.path.startsWith("/api/")) {
-    await initializeDatabase();
+    const force = req.query.retry === "true" || req.query.force === "true";
+    await initializeDatabase(force);
   }
   next();
 });
