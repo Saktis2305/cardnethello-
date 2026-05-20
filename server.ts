@@ -82,11 +82,8 @@ async function initializeDatabase(force: boolean = false) {
 
   if (force) {
     if (dbClient) {
-      try {
-        await dbClient.close();
-      } catch (err) {
-        // ignore close error
-      }
+      // Fire and forget close to prevent hanging the request
+      dbClient.close(true).catch(() => {});
     }
     dbClient = null;
     dbConnected = false;

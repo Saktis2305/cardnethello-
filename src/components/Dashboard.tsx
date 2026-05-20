@@ -44,16 +44,18 @@ export default function Dashboard() {
       const res = await fetch("/api/contacts");
       if (!res.ok) {
         let errMsg = "Local vCard server is unresponsive or database offline.";
+        const rawText = await res.text().catch(() => '');
+        let errData;
         try {
-          const errData = await res.json();
-          if (errData && errData.error) {
-            errMsg = `Server error [${res.status}]: ${errData.error}.${errData.details ? ` Details: ${errData.details}` : ''}`;
-          } else {
-            errMsg = `Server error [${res.status}]: No error details provided.`;
-          }
+          if (rawText) errData = JSON.parse(rawText);
         } catch (jsonErr) {
-          const errText = await res.text().catch(() => 'No text body');
-          errMsg = `Server error [${res.status} ${res.statusText}]: Response is not JSON. Body snippet: ${errText.slice(0, 150)}`;
+          // not JSON
+        }
+        
+        if (errData && errData.error) {
+          errMsg = `Server error [${res.status}]: ${errData.error}.${errData.details ? ` Details: ${errData.details}` : ''}`;
+        } else {
+          errMsg = `Server error [${res.status}]: Response is not valid JSON. Body snippet: ${rawText.slice(0, 150)}`;
         }
         throw new Error(errMsg);
       }
