@@ -104,6 +104,8 @@ async function initializeDatabase(force: boolean = false) {
         console.log("[Database] Attempting to connect to MongoDB...");
         dbClient = new MongoClient(uri, {
           serverSelectionTimeoutMS: 5000,
+          connectTimeoutMS: 5000,
+          socketTimeoutMS: 5000,
         });
         await dbClient.connect();
         storageMode = "database";

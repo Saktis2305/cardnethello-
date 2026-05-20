@@ -47,10 +47,12 @@ export default function Dashboard() {
         try {
           const errData = await res.json();
           if (errData && errData.error) {
-            errMsg = `Server error: ${errData.error}.${errData.details ? ` Details: ${errData.details}` : ''}`;
+            errMsg = `Server error [${res.status}]: ${errData.error}.${errData.details ? ` Details: ${errData.details}` : ''}`;
+          } else {
+            errMsg = `Server error [${res.status}]: No error details provided.`;
           }
         } catch (jsonErr) {
-          // Response is not JSON
+          errMsg = `Server error [${res.status} ${res.statusText}]: Response is not JSON.`;
         }
         throw new Error(errMsg);
       }
@@ -68,9 +70,9 @@ export default function Dashboard() {
     loadContacts();
   }, []);
 
-  const handleRefreshAll = () => {
-    loadConfig(true);
-    loadContacts();
+  const handleRefreshAll = async () => {
+    await loadConfig(true);
+    await loadContacts();
   };
 
   const handleCreateNew = () => {
