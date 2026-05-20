@@ -365,7 +365,8 @@ app.delete("/api/contacts/:id", async (req, res) => {
 // Only set up dev server if not in production and not running on Vercel
 let isViteMounted = false;
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
-  import("vite").then(async ({ createServer }) => {
+  const viteModuleName = "vite";
+  import(viteModuleName).then(async ({ createServer }) => {
     try {
       const vite = await createServer({
         server: { middlewareMode: true },
