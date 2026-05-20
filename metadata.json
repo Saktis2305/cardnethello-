@@ -1,0 +1,8 @@
+{
+  "name": "CARDNET",
+  "description": "Enterprise-grade digital business card (vCard) management system with MongoDB database and in-memory dual setup.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
