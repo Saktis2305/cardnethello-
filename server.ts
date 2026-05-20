@@ -63,6 +63,9 @@ let memoryContacts: any[] = [
   }
 ];
 
+// Cached promise for DB connection in Serverless environments
+let dbConnectionPromise: Promise<void> | null = null;
+
 // Asynchronous DB connection bootstrap
 async function initializeDatabase() {
   const uri = process.env.MONGODB_URI;
@@ -74,26 +77,44 @@ async function initializeDatabase() {
     return;
   }
 
-  try {
-    console.log("[Database] Attempting to connect to MongoDB...");
-    dbClient = new MongoClient(uri, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    await dbClient.connect();
-    storageMode = "database";
-    dbConnected = true;
-    connectionError = null;
-    console.log("[Database] Connected successfully to MongoDB. Running in Database mode.");
-  } catch (err: any) {
-    storageMode = "memory";
-    dbConnected = false;
-    connectionError = `Connection failed: ${err.message || err}. Reverted to Memory mode (Demo).`;
-    console.error(`[Database] Error: ${connectionError}`);
+  if (dbConnected && dbClient) {
+    return;
   }
+
+  if (!dbConnectionPromise) {
+    dbConnectionPromise = (async () => {
+      try {
+        console.log("[Database] Attempting to connect to MongoDB...");
+        dbClient = new MongoClient(uri, {
+          serverSelectionTimeoutMS: 5000,
+        });
+        await dbClient.connect();
+        storageMode = "database";
+        dbConnected = true;
+        connectionError = null;
+        console.log("[Database] Connected successfully to MongoDB. Running in Database mode.");
+      } catch (err: any) {
+        storageMode = "memory";
+        dbConnected = false;
+        connectionError = `Connection failed: ${err.message || err}. Reverted to Memory mode (Demo).`;
+        console.error(`[Database] Error: ${connectionError}`);
+        dbConnectionPromise = null; // Let next attempt retry
+      }
+    })();
+  }
+  return dbConnectionPromise;
 }
 
 // Start database trigger immediately
 initializeDatabase();
+
+// Middleware to ensure DB connection is initialized before handling requests
+app.use(async (req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    await initializeDatabase();
+  }
+  next();
+});
 
 // Help maps MongoDB documents to standard frontend IDs
 function mapToFrontend(contactDoc: any) {
