@@ -75,6 +75,9 @@ async function initializeDatabase(force: boolean = false) {
     connectionError = "MONGODB_URI environment variable is missing. Running in Memory mode (Demo).";
     console.log(`[Database] Mode: Memory. ${connectionError}`);
     return;
+  } else {
+    const obscured = uri.replace(/\/\/([^:]+):([^@]+)@/, "//***:***@");
+    console.log(`[Database] Detected MONGODB_URI of length ${uri.length}. Format prefix: ${obscured.substring(0, 50)}...`);
   }
 
   if (force) {

@@ -43,7 +43,16 @@ export default function Dashboard() {
       setError(null);
       const res = await fetch("/api/contacts");
       if (!res.ok) {
-        throw new Error("Local vCard server is unresponsive or database offline.");
+        let errMsg = "Local vCard server is unresponsive or database offline.";
+        try {
+          const errData = await res.json();
+          if (errData && errData.error) {
+            errMsg = `Server error: ${errData.error}.${errData.details ? ` Details: ${errData.details}` : ''}`;
+          }
+        } catch (jsonErr) {
+          // Response is not JSON
+        }
+        throw new Error(errMsg);
       }
       const data = await res.json();
       setContacts(data);
