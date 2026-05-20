@@ -52,7 +52,8 @@ export default function Dashboard() {
             errMsg = `Server error [${res.status}]: No error details provided.`;
           }
         } catch (jsonErr) {
-          errMsg = `Server error [${res.status} ${res.statusText}]: Response is not JSON.`;
+          const errText = await res.text().catch(() => 'No text body');
+          errMsg = `Server error [${res.status} ${res.statusText}]: Response is not JSON. Body snippet: ${errText.slice(0, 150)}`;
         }
         throw new Error(errMsg);
       }

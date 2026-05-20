@@ -131,8 +131,13 @@ initializeDatabase();
 // Middleware to ensure DB connection is initialized before handling requests
 app.use(async (req, res, next) => {
   if (req.path.startsWith("/api/")) {
-    const force = req.query.retry === "true" || req.query.force === "true";
-    await initializeDatabase(force);
+    try {
+      const force = req.query.retry === "true" || req.query.force === "true";
+      await initializeDatabase(force);
+    } catch (err: any) {
+      console.error("[Middleware] Database initialization error:", err);
+      // We do not block the request, let the route handle the consequence (Memory mode or DB error)
+    }
   }
   next();
 });
